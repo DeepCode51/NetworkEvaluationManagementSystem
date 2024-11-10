@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+
+<mapper namespace="com.taohan.online.exam.dao.ExamPlanInfoMapper">
+	
+	<resultMap type="com.taohan.online.exam.po.ExamPlanInfo" id="queryExamPlanResultMap">
+		<id column="examPlanId" property="examPlanId"/>
+		<result column="beginTime" property="beginTime"/>
+		<association property="course" javaType="com.taohan.online.exam.po.CourseInfo">
+			<id column="courseId" property="courseId"/>
+			<result column="courseName" property="courseName"/>
+		</association>
+		<association property="clazz" javaType="com.taohan.online.exam.po.ClassInfo">
+			<id column="classId" property="classId"/>
+			<result column="className" property="className"/>
+		</association>
+		<association property="examPaper" javaType="com.taohan.online.exam.po.ExamPaperInfo">
+			<id column="examPaperId" property="examPaperId"/>
+			<result column="examPaperName" property="examPaperName"/>
+			<result column="subjectNum" property="subjectNum"/>
+			<result column="examPaperTime" property="examPaperTime"/>
+		</association>
+	</resultMap>
+	
+	<select id="getExamPlans" parameterType="java.util.Map" resultMap="queryExamPlanResultMap">
+		SELECT a.*,b.courseName,c.className,d.examPaperName,d.subjectNum,d.examPaperTime FROM ExamPlanInfo a
+		INNER JOIN CourseInfo b ON a.courseId=b.courseId
+		INNER JOIN ClassInfo c ON a.classId=c.classId
+		INNER JOIN ExamPaperInfo d ON a.examPaperId=d.examPaperId
+		<where>
+			<if test="courseId != null">
+				a.courseId=#{courseId}
+			</if>
+			<if test="examPaperId != null">
+				OR a.examPaperId=#{examPaperId}
+			</if>
+			<if test="classId != null">
+				OR a.classId=#{classId}
+			</if>
+		</where>
+	</select>
+	
+	<insert id="isAddExamPlan" parameterType="com.taohan.online.exam.po.ExamPlanInfo">
+		INSERT INTO ExamPlanInfo VALUES(NULL, #{course.courseId}, #{clazz.classId}, #{examPaper.examPaperId}, #{beginTime})
+	</insert>
+	
+	<update id="isUpdateExamPlan" parameterType="com.taohan.online.exam.po.ExamPlanInfo">
+		UPDATE ExamPlanInfo SET courseId=#{course.courseId}, classId=#{clazz.classId}, examPaperId=#{examPaper.examPaperId}, beginTime=#{beginTime}
+		WHERE examPlanId=#{examPlanId}
+	</update>
+	
+	
+	<select id="getExamPlanById" parameterType="int" resultMap="queryExamPlanResultMap">
+		SELECT a.*,b.courseName,c.className,d.examPaperName,d.subjectNum FROM ExamPlanInfo a
+		INNER JOIN CourseInfo b ON a.courseId=b.courseId
+		INNER JOIN ClassInfo c ON a.classId=c.classId
+		INNER JOIN ExamPaperInfo d ON a.examPaperId=d.examPaperId
+		WHERE a.examPlanId=#{examPlanId}
+	</select>
+	
+	
+	<resultMap type="com.taohan.online.exam.po.ExamPlanInfo" id="queryWillExam">
+		<id column="examPlanId" property="examPlanId"/>
+		<result column="beginTime" property="beginTime"/>
+		<!-- 科目 -->
+		<association property="course" javaType="com.taohan.online.exam.po.CourseInfo">
+			<id column="courseId" property="courseId"/>
+			<result column="courseName" property="courseName"/>
+		</association>
+		<!-- 班级 -->
+		<association property="clazz" javaType="com.taohan.online.exam.po.ClassInfo">
+			<id column="classId" property="classId"/>
+		</association>
+		<!-- 试卷 -->
+		<association property="examPaper" javaType="com.taohan.online.exam.po.ExamPaperInfo">
+			<id column="examPaperId" property="examPaperId"/>
+			<result column="examPaperName" property="examPaperName"/>
+			<result column="subjectNum" property="subjectNum"/>
+			<result column="examPaperScore" property="examPaperScore"/>
+			<result column="examPaperEasy" property="examPaperEasy"/>
+			<result column="examPaperTime" property="examPaperTime"/>
+		</association>
+	</resultMap>
+	<!-- 查询员工待考信息 -->
+	<select id="getStudentWillExam" parameterType="java.util.Map" resultMap="queryWillExam">
+		SELECT a.*,d.exampaperName,d.subjectNum,d.examPaperScore,d.examPaperEasy,d.examPaperTime,e.courseName FROM ExamPlanInfo a
+		INNER JOIN ClassInfo b ON a.classId=b.classId
+		INNER JOIN GradeInfo c ON b.gradeId=c.gradeId
+		INNER JOIN ExamPaperInfo d ON a.examPaperId=d.examPaperId
+		INNER JOIN CourseInfo e ON a.courseId=e.courseId
+		WHERE a.classId=#{classId} AND b.gradeId=#{gradeId}
+	</select>
+	
+	<!-- 移除过期测评安排 -->
+	<delete id="isRemoveExamPlan" parameterType="int">
+		DELETE FROM ExamPlanInfo WHERE examPlanId=#{examPlanId}
+	</delete>
+</mapper>

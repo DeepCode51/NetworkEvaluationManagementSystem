@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+
+<mapper namespace="com.taohan.online.exam.dao.TeacherInfoMapper">
+	
+	<resultMap type="com.taohan.online.exam.po.TeacherInfo" id="getTeacherResultMap">
+		<id column="teacherId" property="teacherId"/>
+		<result column="teacherName" property="teacherName" />
+		<result column="teacherAccount" property="teacherAccount"/>
+		<result column="teacherPwd" property="teacherPwd"/>
+		<result column="adminPower" property="adminPower"/>
+		<result column="isWork" property="isWork"/>
+		<association property="classInfo" javaType="com.taohan.online.exam.po.ClassInfo">
+			<id column="classId" property="classId"/>
+			<result column="className" property="className"/>
+		</association>
+	</resultMap>
+	
+	<parameterMap type="java.util.Map" id="getTeachersParameterMap">
+		<!-- HR对象 -->
+		<parameter property="teacher" resultMap="getTeacherResultMap"/>
+		<!-- 起始位置索引 -->
+		<parameter property="startIndex" resultMap="getTeacherResultMap"/>
+		<!-- 每页显示数据量 -->
+		<parameter property="pageShow" resultMap="getTeacherResultMap"/>
+	</parameterMap>
+	
+	<!-- 获取HR集合 -->
+	<!-- <select id="getTeachers" parameterType="com.taohan.online.exam.po.TeacherInfo" resultMap="getTeacherResultMap">
+		SELECT a.*,b.classId,b.className FROM TeacherInfo a
+		LEFT JOIN ClassInfo b ON a.teacherId=b.teacherId
+		<where>
+			<if test="isWork != null">
+				isWork=#{isWork}
+			</if>
+		</where>
+	</select> -->
+	
+	<!-- 使用 paramenterMap 查询 -->
+	<select id="getTeachers" parameterMap="getTeachersParameterMap" resultMap="getTeacherResultMap">
+		SELECT a.*,b.classId,b.className FROM TeacherInfo a
+		LEFT JOIN ClassInfo b ON a.teacherId=b.teacherId
+		<where>
+			<if test="teacher != null">
+				isWork=#{teacher.isWork}
+			</if>
+		</where>
+		<if test="startIndex != null and pageShow != null">
+			LIMIT #{startIndex}, #{pageShow}
+		</if>
+	</select>
+	
+	<!-- 根据HR账户获取HR信息 -->
+	<select id="getTeacherByAccount" parameterType="string" resultType="com.taohan.online.exam.po.TeacherInfo">
+		SELECT teacherId, teacherName, teacherAccount, teacherPwd, adminPower FROM TeacherInfo WHERE teacherAccount=#{teacherAccount}
+	</select>
+	
+	<!-- 获取HR数据总量 -->
+	<select id="getTeacherTotal" resultType="int">
+		SELECT COUNT(teacherId) FROM TeacherInfo
+	</select>
+	
+	<!-- 修改HR班主任状态 -->
+	<update id="updateTeacherIsWork" parameterType="com.taohan.online.exam.po.TeacherInfo">
+		UPDATE TeacherInfo SET isWork=#{isWork} WHERE teacherId=#{teacherId}
+	</update>
+	
+	<!-- 根据HR编号获取HR信息 -->
+	<select id="getTeacherById" parameterType="int" resultType="com.taohan.online.exam.po.TeacherInfo">
+		SELECT * FROM TeacherInfo WHERE teacherId=#{teacherId}
+	</select>
+	
+	<!-- 修改HR信息 -->
+	<update id="isUpdateTeacherInfo" parameterType="com.taohan.online.exam.po.TeacherInfo">
+		UPDATE TeacherInfo SET teacherName=#{teacherName}, teacherAccount=#{teacherAccount},
+			teacherPwd=#{teacherPwd}, adminPower=#{adminPower}
+		WHERE teacherId=#{teacherId}
+	</update>
+	
+	<!-- 添加HR -->
+	<insert id="isAddTeacherInfo" parameterType="com.taohan.online.exam.po.TeacherInfo">
+		INSERT INTO TeacherInfo VALUES(NULL, #{teacherName}, #{teacherAccount}, #{teacherPwd}, #{adminPower}, 0)
+	</insert>
+	
+	<!-- 删除HR -->
+	<delete id="isDelTeacherInfo" parameterType="int">
+		DELETE FROM TeacherInfo WHERE teacherId=#{teacherId}
+	</delete>
+	
+</mapper>

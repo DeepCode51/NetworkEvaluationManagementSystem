@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.taohan.online.exam.dao.CourseInfoMapper">
+	
+	<resultMap type="com.taohan.online.exam.po.CourseInfo" id="queryCourses">
+		<id column="courseId" property="courseId"/>
+		<result column="courseName" property="courseName"/>
+		<result column="division" property="division"/>
+		<association property="grade" javaType="com.taohan.online.exam.po.GradeInfo">
+			<id column="gradeId" property="gradeId"/>
+			<result column="gradeName" property="gradeName"/>
+		</association>
+	</resultMap>
+	
+	<!-- 查询所有学科 -->
+	<select id="getCourses" parameterType="com.taohan.online.exam.po.CourseInfo" resultMap="queryCourses">
+		SELECT * FROM CourseInfo a
+		INNER JOIN GradeInfo b ON a.gradeId=b.gradeId
+		<where>
+			<if test="grade != null">
+				<if test="grade.gradeId != null">
+					gradeId=#{grade.gradeId}
+				</if>
+			</if>
+			<if test="division != null">
+				AND division=#{division}
+			</if>
+		</where>
+		ORDER BY courseId DESC
+	</select>
+	
+	<!-- 修改学科 -->
+	<update id="isUpdateCourse" parameterType="com.taohan.online.exam.po.CourseInfo">
+		UPDATE CourseInfo SET courseName=#{courseName}, division=#{division}, gradeId=#{grade.gradeId} WHERE courseId=#{courseId}
+	</update>
+	
+	<!-- 添加学科 -->
+	<insert id="isAddCourse" parameterType="com.taohan.online.exam.po.CourseInfo">
+		INSERT INTO CourseInfo VALUES(NULL, #{courseName}, #{division}, #{grade.gradeId})
+	</insert>
+	
+	<!-- 删除学科 -->
+	<delete id="isDelCourse" parameterType="int">
+		DELETE FROM CourseInfo where courseId=#{courseId}
+	</delete>
+	
+	<!-- 根据编号获取 -->
+	<select id="getCourseById" parameterType="int" resultMap="queryCourses">
+		SELECT * FROM CourseInfo a
+		INNER JOIN GradeInfo b ON a.gradeId=b.gradeId
+		WHERE courseId=#{courseId}
+	</select>
+	
+</mapper>

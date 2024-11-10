@@ -1,0 +1,26 @@
+.form-title {
+	
+}
+.ipt {
+	width: 200px;
+	height: 30px;
+	line-height: 30px;
+	border-radius: 3px;
+	border: 1px solid #CCCCCC;
+}
+.sel {
+	width: 200px;
+	height: 30px;
+	line-height: 30px;
+	border-radius: 3px;
+	border: 1px solid #CCCCCC;
+}
+.sub {
+	width: 120px;
+	height: 40px;
+	line-height: 40px;
+	text-align: center;
+	border-radius: 6px;
+	background-color: #FFF;
+	border: 1px solid #CCCCCC;
+}

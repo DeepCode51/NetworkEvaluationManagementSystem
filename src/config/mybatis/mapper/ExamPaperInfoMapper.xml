@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.taohan.online.exam.dao.ExamPaperInfoMapper">
+	
+	<resultMap type="com.taohan.online.exam.po.ExamPaperInfo" id="queryExamPaper">
+		<id column="examPaperId" property="examPaperId"/>
+		<result column="examPaperName" property="examPaperName"/>
+		<result column="subjectNum" property="subjectNum"/>
+		<result column="examPaperTime" property="examPaperTime"/>
+		<result column="examPaperScore" property="examPaperScore"/>
+		<result column="division" property="division"/>
+		<result column="examPaperEasy" property="examPaperEasy"/>
+		<!-- 对应班级 -->
+		<association property="grade" javaType="com.taohan.online.exam.po.GradeInfo">
+			<id column="gradeId" property="gradeId"/>
+			<result column="gradeName" property="gradeName"/>
+		</association>
+	</resultMap>
+	
+	<parameterMap type="java.util.Map" id="getExamPapersParameterMap">
+		<parameter property="examPaper" resultMap="queryExamPaper"/>
+		<parameter property="startIndex" resultMap="queryExamPaper"/>
+		<parameter property="pageShow" resultMap="queryExamPaper"/>
+	</parameterMap>
+	
+	<!-- 获取试卷 -->
+	<select id="getExamPapers" parameterMap="getExamPapersParameterMap" resultMap="queryExamPaper">
+		SELECT a.*,b.gradeName FROM ExamPaperInfo a INNER
+		JOIN GradeInfo b ON a.gradeId=b.gradeId
+		<where>
+			<if test="examPaper != null">
+				<if test="grade != null">
+					a.gradeId=#{grade.gradeId}
+				</if>
+			</if>
+		</where>
+		<if test="startIndex != null and pageShow != null">
+			LIMIT #{startIndex}, #{pageShow}
+		</if>
+	</select>
+	
+	<!-- 根据编号获取 -->
+	<select id="getExamPaperById" parameterType="int" resultMap="queryExamPaper">
+		SELECT a.*,b.gradeName FROM ExamPaperInfo a INNER
+		JOIN GradeInfo b ON a.gradeId=b.gradeId
+		WHERE examPaperId=#{examPaperId}
+	</select>
+
+	<select id="getExamPapersClear" resultMap="queryExamPaper">
+		SELECT a.*,b.gradeName FROM ExamPaperInfo a INNER
+		JOIN GradeInfo b ON a.gradeId=b.gradeId
+	</select>
+	
+	<!-- 添加试卷 -->
+	<insert id="isAddExamPaper" parameterType="com.taohan.online.exam.po.ExamPaperInfo" useGeneratedKeys="true" keyProperty="examPaperId">
+		INSERT INTO ExamPaperInfo VALUES(NULL, #{examPaperName}, #{subjectNum}, #{examPaperTime}, #{examPaperScore}, #{grade.gradeId}, #{division}, #{examPaperEasy})
+	</insert>
+	
+	<!-- 修改试卷信息 -->
+	<update id="isUpdateExamPaper" parameterType="com.taohan.online.exam.po.ExamPaperInfo">
+		UPDATE ExamPaperInfo SET
+		examPaperName=#{examPaperName}, subjectNum=#{subjectNum}, examPaperTime=#{examPaperTime},
+		examPaperScore=#{examPaperScore}, division=#{division}, examPaperEasy=#{examPaperEasy}, gradeId=#{grade.gradeId}
+		WHERE examPaperId=#{examPaperId}
+	</update>
+	
+	<!-- 删除试卷 -->
+	<delete id="isDelExamPaper" parameterType="int">
+		DELETE FROM ExamPaperInfo WHERE examPaperId=#{examPaperId}
+	</delete>
+	
+	<select id="getExamPpaerTotal" resultType="int">
+		SELECT COUNT(examPaperId) FROM ExamPaperInfo
+	</select>
+	
+	<!-- 修改试卷试题总量 -->
+	<update id="isUpdateExamPaperSubjects" parameterType="java.util.Map">
+		UPDATE ExamPaperInfo SET subjectNum=subjectNum+#{subjectNum}
+		WHERE examPaperId=#{examPaperId}
+	</update>
+	
+	<!-- 修改试卷总分 -->
+	<update id="isUpdateExamPaperScore" parameterType="java.util.Map">
+		UPDATE ExamPaperInfo SET examPaperScore=examPaperScore+#{score}
+		WHERE examPaperId=#{examPaperId}
+	</update>
+</mapper>

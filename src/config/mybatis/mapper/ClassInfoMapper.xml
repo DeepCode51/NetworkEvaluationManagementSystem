@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+
+<mapper namespace="com.taohan.online.exam.dao.ClassInfoMapper">
+
+	<resultMap id="getClassesResultMap" type="com.taohan.online.exam.po.ClassInfo">
+		<id column="classId" property="classId"/>
+		<result column="className" property="className"/>
+		<!-- 班级 -->
+		<association property="grade" javaType="com.taohan.online.exam.po.GradeInfo">
+			<id column="gradeId" property="gradeId"/>
+			<result column="gradeName" property="gradeName"/>
+		</association>
+		<!-- 班主任 -->
+		<association property="teacher" javaType="com.taohan.online.exam.po.TeacherInfo">
+			<id column="teacherId" property="teacherId"/>
+			<result column="teacherName" property="teacherName"/>
+		</association>
+	</resultMap>
+	
+	<!-- 获取班级集合
+		可添加根据班级编号查询
+		或
+		班级编号
+		或
+		班级名称进行(模糊/精确)  查询
+	 -->
+	<select id="getClasses" parameterType="com.taohan.online.exam.po.ClassInfo" resultMap="getClassesResultMap">
+		SELECT * FROM ClassInfo a
+		LEFT JOIN TeacherInfo b ON a.teacherId=b.teacherId
+		LEFT JOIN GradeInfo c ON a.gradeId=c.gradeId
+		<where>
+			<!-- 需要先判断grade是否为空
+				如果不判断，且 grade 为空，那么判断 grade.gradeId 就会报错
+			 -->
+			<if test="grade != null">
+				<if test="grade.gradeId != null">
+					a.gradeId=#{grade.gradeId}
+				</if>
+			</if>
+			<if test="classId != null">
+				AND classId=#{classId}
+			</if>
+			<if test="className != null and className != ''">
+				AND className LIKE '%${className}%'
+			</if>
+		</where>
+	</select>
+	
+	<!-- 添加班级 -->
+	<insert id="isAddClass" parameterType="com.taohan.online.exam.po.ClassInfo">
+		INSERT INTO ClassInfo VALUES(NULL, #{className}, #{grade.gradeId}, #{teacher.teacherId})
+	</insert>
+	
+	<!-- 根据编号删除班级 -->
+	<delete id="isDelClass" parameterType="int">
+		DELETE FROM ClassInfo WHERE classId=#{classId}
+	</delete>
+	
+	<!-- 根据班级编号获取班级 -->
+	<select id="getClassById" parameterType="int" resultMap="getClassesResultMap">
+		SELECT * FROM ClassInfo a
+		LEFT JOIN TeacherInfo b ON a.teacherId=b.teacherId
+		LEFT JOIN GradeInfo c ON a.gradeId=c.gradeId
+		WHERE classId=#{classId}
+	</select>
+	
+	<!-- 根据当前班级班主任编号获取班级信息 -->
+	<select id="getClassByTeacherId" parameterType="int" resultType="com.taohan.online.exam.po.ClassInfo">
+		SELECT classId,className FROM ClassInfo where teacherId=#{teacherId}
+	</select>
+	
+	<!-- 修改班级信息 -->
+	<update id="isUpdateClass" parameterType="com.taohan.online.exam.po.ClassInfo">
+		UPDATE ClassInfo SET className=#{className}, gradeId=#{grade.gradeId}, teacherId=#{teacher.teacherId} WHERE classId=#{classId}
+	</update>
+	
+	<!-- 获取指定班级下的班级列表 -->
+	<select id="getClassByGradeId" parameterType="int" resultType="com.taohan.online.exam.po.ClassInfo">
+		SELECT b.* FROM GradeInfo a INNER JOIN ClassInfo b ON a.gradeId=b.gradeId WHERE a.gradeId=#{gradeId}
+	</select>
+	
+	<!-- 获取各(指定班级下)班级下的员工总量 -->
+	<select id="getStudentCountForClass" parameterType="int" resultType="com.taohan.online.exam.po.ClassInfo">
+		select count(s.studentId) as classId,c.className as className 
+		from StudentInfo s,GradeInfo g,ClassInfo c  
+		<where>
+			g.gradeId = c.gradeId and s.classId = c.classId
+			<if test="_parameter != null">
+				and g.gradeId =#{_parameter}
+			</if>
+		</where>
+		GROUP BY c.classId;
+	</select>
+</mapper>

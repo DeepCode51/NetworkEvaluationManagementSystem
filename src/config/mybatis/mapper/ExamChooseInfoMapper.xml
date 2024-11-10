@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+
+<mapper namespace="com.taohan.online.exam.dao.ExamChooseInfoMapper">
+	
+	<!-- 根据员工编号、试卷编号、试题编号查询选择记录
+		针对于具体某一题
+	 -->
+	<select id="getChooseWithIds" parameterType="java.util.Map" resultType="com.taohan.online.exam.po.ExamChooseInfo">
+		SELECT * FROM ExamChooseInfo
+		WHERE studentId=#{studentId} AND examPaperId=#{examPaperId} AND subjectId=#{subjectId}
+	</select>
+
+	<!-- 根据员工编号、试卷编号、试题编号修改选择记录 -->
+	<update id="updateChooseWithIds" parameterType="com.taohan.online.exam.po.ExamChooseInfo">
+		UPDATE ExamChooseInfo SET chooseResult=#{chooseResult}
+		WHERE chooseId=#{chooseId}
+	</update>
+	
+	<!-- 添加选择记录 -->
+	<insert id="addChoose" parameterType="java.util.Map">
+		INSERT INTO ExamChooseInfo VALUES
+		(NULL, #{studentId}, #{examPaperId}, #{subjectId}, #{chooseResult})
+	</insert>
+	
+	
+	<resultMap type="com.taohan.online.exam.po.ExamChooseInfo" id="queryChooseInfosResultMap">
+		<id column="chooseId" property="chooseId"/>
+		<result column="chooseResult" property="chooseResult"/>
+		<association property="subject" javaType="com.taohan.online.exam.po.SubjectInfo">
+			<id column="subjectId" property="subjectId"/>
+			<result column="rightResult" property="rightResult"/>
+			<result column="subjectScore" property="subjectScore"/>
+		</association>
+	</resultMap>
+	
+	<!-- 获取员工试卷试题选择 所有选择信息
+		针对所有试题，用于提交试卷统计得分情况
+	 -->
+	 <select id="getChooseInfoWithSumScore" parameterType="java.util.Map" resultMap="queryChooseInfosResultMap">
+	 	SELECT 
+		a.chooseId,
+		a.chooseResult,
+		a.subjectId,
+		b.rightResult,
+		b.subjectScore
+		FROM ExamChooseInfo a 
+		INNER JOIN subjectInfo b ON a.subjectId=b.subjectId
+		WHERE studentId=#{studentId} AND examPaperId=#{examPaperId};
+	 </select>
+	 
+	 
+	 <resultMap type="com.taohan.online.exam.po.ExamChooseInfo" id="queryChooseInfoWithExamSubjectResultMap">
+		<id column="chooseId" property="chooseId"/>
+		<result column="chooseResult" property="chooseResult"/>
+		<association property="subject" javaType="com.taohan.online.exam.po.SubjectInfo">
+			<id column="subjectId" property="subjectId"/>
+			<result column="subjectName" property="subjectName"/>
+			<result column="optionA" property="optionA"/>
+			<result column="optionB" property="optionB"/>
+			<result column="optionC" property="optionC"/>
+			<result column="optionD" property="optionD"/>
+			<result column="rightResult" property="rightResult"/>
+			<result column="subjectScore" property="subjectScore"/>
+			<result column="subjectEasy" property="subjectEasy"/>
+		</association>
+		<association property="examPaper" javaType="com.taohan.online.exam.po.ExamPaperInfo">
+			<id column="examPaperId" property="examPaperId"/>
+			<result column="examPaperName" property="examPaperName"/>
+			<result column="examPaperScore" property="examPaperScore"/>
+		</association>
+		<association property="student" javaType="com.taohan.online.exam.po.StudentInfo">
+			<id column="studentId" property="studentId"/>
+		</association>
+	</resultMap>
+	 <!-- 查询员工试题选择信息、对应试卷信息、试题信息
+	 	针对于回顾试卷
+	  -->
+	  <select id="getChooseInfoWithExamSubject" parameterType="java.util.Map" resultMap="queryChooseInfoWithExamSubjectResultMap">
+	  	SELECT
+		a.examPaperId,a.examPaperName,a.examPaperScore,
+		b.chooseId,b.studentId,b.chooseResult,
+		c.subjectId,c.subjectName,c.optionA,c.optionB,c.optionC,c.optionD,c.rightResult,c.subjectScore,c.subjectEasy
+		FROM ExamPaperInfo a 
+		INNER JOIN ExamChooseInfo b ON a.examPaperId=b.examPaperId
+		INNER JOIN SubjectInfo c ON b.subjectId=c.subjectId
+		WHERE b.examPaperId=#{examPaperId} AND b.studentId=#{studentId};
+	  </select>
+</mapper>

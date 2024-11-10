@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.taohan.online.exam.dao.StudentInfoMapper">
+	
+	<resultMap type="com.taohan.online.exam.po.StudentInfo" id="queryStudent">
+		<id column="studentId" property="studentId"/>
+		<result column="studentName" property="studentName"/>
+		<result column="studentAccount" property="studentAccount"/>
+		<result column="studentPwd" property="studentPwd"/>
+		<!-- 班级 -->
+		<association property="classInfo" javaType="com.taohan.online.exam.po.ClassInfo">
+			<id column="classId" property="classId"/>
+			<result column="className" property="className"/>
+		</association>
+		<!-- 班级 -->
+		<association property="grade" javaType="com.taohan.online.exam.po.GradeInfo">
+			<id column="gradeId" property="gradeId"/>
+			<result column="gradeName" property="gradeName"/>
+		</association>
+	</resultMap>
+	
+	<parameterMap type="java.util.Map" id="getStudentParameterMap">
+		<parameter property="student" resultMap="queryStudent"/>
+		<parameter property="startIndex" resultMap="queryStudent"/>
+		<parameter property="pageShow" resultMap="queryStudent"/>
+	</parameterMap>
+	
+	<!-- 获取员工集合 -->
+	<select id="getStudents" parameterMap="getStudentParameterMap" resultMap="queryStudent">
+		SELECT a.*,b.className, c.gradeName FROM StudentInfo a
+		INNER JOIN ClassInfo b ON a.classId=b.classId
+		INNER JOIN GradeInfo c ON b.gradeId=c.gradeId
+		<where>
+			<if test="studentId != null">
+				studentId=#{studentId}
+			</if>
+			<if test="classInfo != null">
+				<if test="classInfo.classId != null">
+					b.classId=#{classInfo.classId}
+				</if>
+			</if>
+			<if test="grade != null">
+				<if test="grade.gradeId != null">
+					c.gradeId=#{grade.gradeId}
+				</if>
+			</if>
+		</where>
+		<if test="startIndex != null and pageShow != null">
+			LIMIT #{startIndex}, #{pageShow}
+		</if>
+	</select>
+	
+	<select id="getStudentById" parameterType="int" resultMap="queryStudent">
+		SELECT a.*,b.className,c.gradeId,c.gradeName FROM StudentInfo a
+		INNER JOIN ClassInfo b ON a.classId=b.classId
+		INNER JOIN GradeInfo c ON b.gradeId=c.gradeId
+		WHERE a.studentId=#{studentId}
+	</select>
+	
+	<update id="isUpdateStudent" parameterType="com.taohan.online.exam.po.StudentInfo">
+		UPDATE StudentInfo SET
+		studentName=#{studentName}, studentAccount=#{studentAccount}, studentPwd=#{studentPwd}, classId=#{classInfo.classId}
+		WHERE studentId=#{studentId}
+	</update>
+	
+	<delete id="isDelStudent" parameterType="int">
+		DELETE FROM StudentInfo WHERE studentId=#{studentId}
+	</delete>
+	
+	<insert id="isAddStudent" parameterType="com.taohan.online.exam.po.StudentInfo">
+		INSERT INTO StudentInfo VALUES(NULL, #{studentName}, #{studentAccount}, #{studentPwd}, #{classInfo.classId})
+	</insert>
+	
+	<select id="getStudentTotal" resultType="int">
+		SELECT COUNT(studentId) FROM StudentInfo
+	</select>
+	
+	<select id="getStudentByAccountAndPwd" parameterType="java.lang.String" resultMap="queryStudent">
+		SELECT a.*,b.className,c.gradeId,c.gradeName FROM StudentInfo a
+		INNER JOIN ClassInfo b ON a.classId=b.classId
+		INNER JOIN GradeInfo c ON b.gradeId=c.gradeId
+		WHERE studentAccount=#{studentAccount}
+	</select>
+	
+	<!-- 员工重置密码 -->
+	<update id="isResetPwdWithStu" parameterType="com.taohan.online.exam.po.StudentInfo">
+		UPDATE StudentInfo SET
+		studentPwd=#{studentPwd}
+		WHERE studentId=#{studentId}
+	</update>
+	
+	<!-- 获取指定班级下的所有员工 -->
+	<select id="getStudentsByClassId" parameterType="int" resultType="com.taohan.online.exam.po.StudentInfo">
+		SELECT studentId,studentName FROM StudentInfo WHERE classId=#{classId}
+	</select>
+	
+</mapper>

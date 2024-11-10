@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.taohan.online.exam.dao.SubjectInfoMapper">
+	
+	<resultMap type="com.taohan.online.exam.po.SubjectInfo" id="querySubjects">
+		<id column="subjectId" property="subjectId"/>
+		<result column="subjectName" property="subjectName"/>
+		<result column="optionA" property="optionA"/>
+		<result column="optionB" property="optionB"/>
+		<result column="optionC" property="optionC"/>
+		<result column="optionD" property="optionD"/>
+		<result column="rightResult" property="rightResult"/>
+		<result column="subjectScore" property="subjectScore"/>	
+		<result column="subjectType" property="subjectType"/>
+		<result column="subjectEasy" property="subjectEasy"/>
+		<result column="division" property="division"/>
+		<!-- 科目 -->
+		<association property="course" javaType="com.taohan.online.exam.po.CourseInfo">
+			<id column="courseId" property="courseId"/>
+			<result column="courseName" property="courseName"/>
+		</association>
+		<!-- 班级 -->
+		<association property="grade" javaType="com.taohan.online.exam.po.GradeInfo">
+			<id column="gradeId" property="gradeId"/>
+			<result column="gradeName" property="gradeName"/>
+		</association>
+	</resultMap>
+	
+	<parameterMap type="java.util.Map" id="getSubjectsParameterMap">
+		<parameter property="subject" resultMap="querySubjects"/>
+		<parameter property="startIndex" resultMap="querySubjects"/>
+		<parameter property="pageShow" resultMap="querySubjects"/>
+	</parameterMap>
+	
+	<sql id="querySubjectSql">
+		SELECT a.*, b.courseName, c.gradeName FROM SubjectInfo a
+		LEFT JOIN CourseInfo b ON a.courseId=b.courseId
+		LEFT JOIN GradeInfo c ON a.gradeId=c.gradeId
+	</sql>
+	
+	<!-- 获取试题集合 -->
+	<select id="getSubjects" parameterMap="getSubjectsParameterMap" resultMap="querySubjects">
+		<include refid="querySubjectSql"></include>
+		<where>
+			<if test="subject != null">
+				<if test="subject.subjectId != null">
+					subjectId=#{subjectId}
+				</if>
+				<if test="subject.course != null">
+					OR a.courseId=#{subject.course.courseId}
+				</if>
+				<if test="subject.grade != null">
+					OR a.gradeId=#{subject.grade.gradeId}
+				</if>
+			</if>
+		</where>
+		<if test="startIndex != null and pageShow != null">
+			LIMIT #{startIndex}, #{pageShow}
+		</if>
+	</select>
+	
+	<!-- 根据试题编号获取试题 -->
+	<select id="getSubjectWithId" parameterType="int" resultMap="querySubjects">
+		<include refid="querySubjectSql"></include>
+		WHERE subjectId=#{subjectId}
+	</select>
+	
+	
+	<!-- 获取试题总量 -->
+	<select id="getSubjectTotal" resultType="int">
+		SELECT COUNT(subjectId) FROM SubjectInfo
+	</select>
+	
+	<!-- 添加试题 -->
+	<insert id="isAddSubject" parameterType="com.taohan.online.exam.po.SubjectInfo" useGeneratedKeys="true" keyProperty="subjectId">
+		INSERT INTO SubjectInfo VALUES
+		(NULL, #{subjectName}, #{optionA}, #{optionB}, #{optionC}, #{optionD}, #{rightResult}, #{subjectScore}, #{subjectType}, #{course.courseId}, #{grade.gradeId}, #{subjectEasy}, #{division})
+	</insert>
+	
+	<!-- 修改试题 -->
+	<update id="isUpdateSubject" parameterType="com.taohan.online.exam.po.SubjectInfo">
+		UPDATE SubjectInfo SET 
+		subjectName=#{subjectName}, optionA=#{optionA}, optionB=#{optionB}, optionC=#{optionC}, optionD=#{optionD}, rightResult=#{rightResult}, subjectScore=#{subjectScore}, subjectType=#{subjectType}, courseId=#{course.courseId}, gradeId=#{grade.gradeId}, subjectEasy=#{subjectEasy}, division=#{division}
+		WHERE subjectId=#{subjectId}
+	</update>
+	
+	<!-- 删除试题 -->
+	<delete id="isDelSubject" parameterType="int">
+		DELETE FROM SubjectInfo WHERE subjectId=#{subjectId}
+	</delete>
+	
+	<!-- 批量添加试题 -->
+	<insert id="isAddSubjects" parameterType="java.util.Map">
+		INSERT INTO SubjectInfo VALUES
+		<if test="subjects != null">
+			<foreach collection="subjects" item="subject" close=";" separator=",">
+				(NULL, #{subject.subjectName}, #{subject.optionA}, #{subject.optionB}, #{subject.optionC}, #{subject.optionD}, #{subject.rightResult}, #{subject.subjectScore}, #{subject.subjectType}, #{subject.course.courseId}, #{subject.grade.gradeId}, #{subject.subjectEasy}, #{subject.division})
+			</foreach>
+		</if>
+	</insert>
+</mapper>

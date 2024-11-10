@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+
+<mapper namespace="com.taohan.online.exam.dao.StudentExamInfoMapper">
+
+	<resultMap type="com.taohan.online.exam.po.StudentExamInfo" id="baseQueryResultMap">
+		<result column="studentId" property="studentId" />
+		<result column="studentName" property="studentName" />
+		<result column="examSum" property="examSum" />
+		<result column="avgScore" property="avgScore" />
+		<result column="examScore" property="examScore" />
+		<result column="examPaperName" property="examPaperName" />
+		<result column="examPaperScore" property="examPaperScore" />
+	</resultMap>
+	
+	<!-- 后台HR根据查看某一班级下所有员工测评数量 -->
+	<select id="getStudentExamCountByClassId" parameterType="int" resultMap="baseQueryResultMap">
+		SELECT
+		a.studentId,a.studentName,COUNT(historyId) `examSum`
+		FROM StudentInfo a
+		LEFT JOIN ExamHistoryInfo b ON a.studentId=b.studentId
+		WHERE classId=#{classId}
+		GROUP BY a.studentId;
+	</select>
+	
+	<!-- 后台HR查看某一员工的测评信息 -->
+	<select id="getStudentExamInfo" parameterType="int" resultMap="baseQueryResultMap">
+		SELECT 
+		a.studentId,studentName,examScore,examPaperName,examPaperScore
+		FROM StudentInfo a
+		LEFT JOIN ExamHistoryInfo b ON a.studentId=b.studentId
+		INNER JOIN ExamPaperInfo c ON b.examPaperId=c.examPaperId
+		WHERE a.studentId=#{studentId};
+	</select>
+	
+	<!-- 后台HR查看指定班级中所有员工的平均成绩以及测评次数 -->
+	<select id="getAllStudentAvgScoreCount" parameterType="int" resultMap="baseQueryResultMap">
+		SELECT 
+		SUM(examScore) avgScore, COUNT(historyId) examSum, a.studentName
+		FROM StudentInfo a
+		LEFT JOIN ExamHistoryInfo b ON a.studentId=b.studentId
+		LEFT JOIN ExamPaperInfo c ON b.examPaperId=c.examPaperId
+		WHERE a.classId=#{classId}
+		GROUP BY a.studentId
+	</select>
+</mapper>

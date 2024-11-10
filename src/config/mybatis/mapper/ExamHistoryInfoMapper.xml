@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+
+<mapper namespace="com.taohan.online.exam.dao.ExamHistoryPaperMapper">
+	
+	<resultMap type="com.taohan.online.exam.po.ExamHistoryInfo" id="queryExamHistoryToStudentResultMap">
+		<id column="historyId" property="historyId"/>
+		<result column="examScore" property="examScore"/>
+		<association property="examPaper" javaType="com.taohan.online.exam.po.ExamPaperInfo">
+			<id column="examPaperId" property="examPaperId"/>
+			<result column="examPaperName" property="examPaperName"/>
+			<result column="examPaperScore" property="examPaperScore"/>
+			<result column="subjectNum" property="subjectNum"/>
+		</association>
+	</resultMap>
+	
+	<!-- 查询测评历史信息，针对前台员工查询 -->
+	<select id="getExamHistoryToStudent" parameterType="int" resultType="ExamHistoryPaper">
+		SELECT
+		a.historyId,a.examScore,b.examPaperId,b.examPaperName,b.examPaperScore,b.subjectNum,c.beginTime
+		FROM ExamHistoryInfo a
+		LEFT JOIN examPaperInfo b ON a.examPaperId=b.exampaperId
+		LEFT JOIN examPlanInfo c ON b.examPaperId=c.examPaperId
+		WHERE studentId=#{studentId}
+	</select>
+	
+	
+	<!-- 新增历史记录 -->
+	<insert id="isAddExamHistory" parameterType="java.util.Map">
+		INSERT INTO ExamHistoryInfo VALUES(NULL, #{studentId}, #{examPaperId}, #{examScore});
+	</insert>
+	
+	<select id="getHistoryInfoWithIds" parameterType="java.util.Map" resultType="int">
+		SELECT COUNT(*) FROM ExamHistoryInfo WHERE studentId=#{studentId} AND examPaperId=#{examPaperId}
+	</select>
+	
+	
+	
+	<resultMap type="com.taohan.online.exam.po.ExamHistoryInfo" id="queryExamHistoryToTeacherResultMap">
+		<id column="historyId" property="historyId"/>
+		<result column="examScore" property="examScore"/>
+		<association property="examPaper" javaType="com.taohan.online.exam.po.ExamPaperInfo">
+			<id column="examPaperId" property="examPaperId"/>
+			<result column="examPaperName" property="examPaperName"/>
+			<result column="examPaperScore" property="examPaperScore"/>
+			<result column="subjectNum" property="subjectNum"/>
+		</association>
+		<association property="student" javaType="com.taohan.online.exam.po.StudentInfo">
+			<id column="studentId" property="studentId"/>
+			<result column="studentName" property="studentName"/>
+		</association>
+	</resultMap>
+	<!-- 查询测评历史信息，针对后台HR查询 -->
+	<select id="getExamHistoryToTeacher" resultMap="queryExamHistoryToTeacherResultMap">
+		SELECT
+		a.historyId,a.examScore,b.examPaperId,b.examPaperName,b.examPaperScore,b.subjectNum,d.studentId,d.studentName
+		FROM ExamHistoryInfo a
+		INNER JOIN examPaperInfo b ON a.examPaperId=b.exampaperId
+		LEFT JOIN StudentInfo d ON a.studentId=d.studentId;
+	</select>
+</mapper>

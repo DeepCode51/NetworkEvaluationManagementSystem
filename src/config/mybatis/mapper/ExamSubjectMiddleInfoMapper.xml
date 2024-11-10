@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.taohan.online.exam.dao.ExamSubjectMiddleInfoMapper">
+	
+	<resultMap type="com.taohan.online.exam.po.ExamSubjectMiddleInfo" id="queryExamSubjectMiddle">
+		<id column="esmId" property="esmId"/>
+		<!-- 试卷 -->
+		<association property="examPaper" javaType="com.taohan.online.exam.po.ExamPaperInfo">
+			<id column="examPaperId" property="examPaperId"/>
+			<result column="examPaperName" property="examPaperName"/>
+			<result column="examPaperTime" property="examPaperTime"/>
+		</association>
+		<!-- 试题 -->
+		<association property="subject" javaType="com.taohan.online.exam.po.SubjectInfo">
+			<id column="subjectId" property="subjectId"/>
+			<result column="subjectName" property="subjectName"/>
+			<result column="optionA" property="optionA"/>
+			<result column="optionB" property="optionB"/>
+			<result column="optionC" property="optionC"/>
+			<result column="optionD" property="optionD"/>
+			<result column="rightResult" property="rightResult"/>
+			<result column="subjectScore" property="subjectScore"/>	
+			<result column="subjectType" property="subjectType"/>
+			<result column="subjectEasy" property="subjectEasy"/>
+			<result column="division" property="division"/>
+			<!-- 科目 -->
+			<association property="course" javaType="com.taohan.online.exam.po.CourseInfo">
+				<id column="courseId" property="courseId"/>
+				<result column="courseName" property="courseName"/>
+			</association>
+			<!-- 班级 -->
+			<association property="grade" javaType="com.taohan.online.exam.po.GradeInfo">
+				<id column="gradeId" property="gradeId"/>
+				<result column="gradeName" property="gradeName"/>
+			</association>
+		</association>
+	</resultMap>
+	
+	
+	<!-- 查询试卷-试题信息 -->
+	<select id="getExamPaperWithSubject" parameterType="com.taohan.online.exam.po.ExamSubjectMiddleInfo" resultMap="queryExamSubjectMiddle">
+		SELECT a.esmId, a.exampaperId, b.examPaperName, b.examPaperTime, c.*, d.courseName, e.gradeName
+		FROM ExamSubjectMiddleInfo a
+		INNER JOIN ExamPaperInfo b ON a.examPaperId=b.examPaperId
+		INNER JOIN SubjectInfo c ON a.subjectId=c.subjectId
+		INNER JOIN CourseInfo d ON c.courseId=d.courseId
+		INNER JOIN GradeInfo e ON c.gradeId=e.gradeId
+		<where>
+			<!-- 根据试卷查询当前试卷中的所有试题 -->
+			<if test="examPaper != null">
+				<if test="examPaper.examPaperId != null">a.examPaperId=#{examPaper.examPaperId}</if>
+			</if>
+			
+			<if test="subject != null">
+				<if test="subject.course != null">
+					<!-- 根据科目进行(模糊)查询 -->
+					<if test="subject.course.courseName != null">AND d.courseName LIKE '%${subject.course.courseName}%'</if>
+					<!-- 根据科目编号进行查询 -->
+					<if test="subject.course.courseId != null">AND d.courseId=#{subject.course.courseId}</if>
+				</if>
+				
+				<if test="subject.grade != null">
+					<!-- 根据班级编号进行查询 -->
+					<if test="subject.grade.gradeId != null">AND e.gradeId=#{subject.grade.gradeId}</if>
+				</if>
+			</if>
+		</where>
+	</select>
+	
+	
+	<!-- 
+		进行批量添加
+		SQL 格式：
+			INSERT INTO ExamSubjectMiddleInfo VALUES
+			(NULL, ?, ?) , (NULL, ?, ?) , (NULL, ?, ?) , (NULL, ?, ?);
+	 -->
+	<insert id="isAddESM" parameterType="java.util.Map">
+		INSERT INTO ExamSubjectMiddleInfo VALUES
+		<if test="examPaperId != null">
+			<if test="subjectIds != null">
+				<foreach collection="subjectIds" item="subjectId" close=";" separator=",">
+					(NULL, #{examPaperId}, #{subjectId})
+				</foreach>
+			</if>
+		</if>
+	</insert>
+	
+	<!-- 移除试卷中的试题 -->
+	<delete id="removeSubjectWithExamPaper" parameterType="java.util.Map">
+		DELETE FROM ExamSubjectMiddleInfo
+		WHERE examPaperId=#{examPaperId} AND subjectId=#{subjectId}
+	</delete>
+	
+	<!-- 根据试卷编号和试题编号进行查询 -->
+	<select id="getEsmByExamIdWithSubjectId" parameterType="com.taohan.online.exam.po.ExamSubjectMiddleInfo" resultType="int">
+		SELECT esmId FROM ExamSubjectMiddleInfo
+		WHERE examPaperId=#{examPaper.examPaperId} AND subjectId=#{subject.subjectId}
+	</select>
+</mapper>
